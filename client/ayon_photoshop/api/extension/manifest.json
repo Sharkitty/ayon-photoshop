@@ -1,0 +1,41 @@
+{
+    "manifestVersion": 5,
+    "id": "io.ynput.PS",
+    "name": "Ayon Photoshop",
+    "version": "1.0.1",
+    "main": "index.html",
+    "host": {
+        "app": "PS",
+        "minVersion": "23.3.0"
+    },
+    "entrypoints": [
+        {
+            "type": "panel",
+            "id": "ayon",
+            "minimumSize": { "width": 230, "height": 200 },
+            "maximumSize": { "width": 2000, "height": 2000 },
+            "preferredDocekdSize": { "width": 230, "height": 200 },
+            "preferredFloatingSize": { "width": 230, "height": 200 },
+            "label": { "default": "Ayon" },
+            "icons": [
+                {
+                    "width": 48,
+                    "height": 48,
+                    "path": "icons/ayon_logo.png",
+                    "scale": [ 1 ],
+                    "theme": [ "all" ]
+                }
+            ]
+        }
+    ],
+    "icons": [
+        {
+            "width": 48,
+            "height": 48,
+            "path": "icons/ayon_logo.png",
+            "scale": [ 1 ],
+            "theme": [ "all" ],
+            "species": [ "generic" ]
+        }
+    ]
+}
