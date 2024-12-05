@@ -1,16 +1,16 @@
-(function (global, factory) {
+(async function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.WSRPC = factory());
-}(this, function () { 'use strict';
+}(this, async function () { 'use strict';
 
-  function _classCallCheck(instance, Constructor) {
+  async function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   }
 
-  var Deferred = function Deferred() {
+  var Deferred = async function Deferred() {
     _classCallCheck(this, Deferred);
 
     var self = this;
@@ -18,8 +18,8 @@
     self.reject = null;
     self.done = false;
 
-    function wrapper(func) {
-      return function () {
+    async function wrapper(func) {
+      return async function () {
         if (self.done) throw new Error('Promise already done');
         self.done = true;
         return func.apply(this, arguments);
@@ -31,32 +31,32 @@
       self.reject = wrapper(reject);
     });
 
-    self.promise.isPending = function () {
+    self.promise.isPending = async function () {
       return !self.done;
     };
 
     return self;
   };
 
-  function logGroup(group, level, args) {
+  async function logGroup(group, level, args) {
     console.group(group);
     console[level].apply(this, args);
     console.groupEnd();
   }
 
-  function log() {
+  async function log() {
     if (!WSRPC.DEBUG) return;
     logGroup('WSRPC.DEBUG', 'trace', arguments);
   }
 
-  function trace(msg) {
+  async function trace(msg) {
     if (!WSRPC.TRACE) return;
     var payload = msg;
     if ('data' in msg) payload = JSON.parse(msg.data);
     logGroup("WSRPC.TRACE", 'trace', [payload]);
   }
 
-  function getAbsoluteWsUrl(url) {
+  async function getAbsoluteWsUrl(url) {
     if (/^\w+:\/\//.test(url)) return url;
     if (typeof window == 'undefined' && window.location.host.length < 1) throw new Error("Can not construct absolute URL from ".concat(window.location));
     var scheme = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -73,7 +73,7 @@
     3: 'CLOSED'
   });
 
-  var WSRPC = function WSRPC(URL) {
+  var WSRPC = async function WSRPC(URL) {
     var reconnectTimeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1000;
 
     _classCallCheck(this, WSRPC);
@@ -98,10 +98,10 @@
     };
     self.callQueue = [];
 
-    function createSocket() {
+    async function createSocket() {
       var ws = new WebSocket(URL);
 
-      var rejectQueue = function rejectQueue() {
+      var rejectQueue = async function rejectQueue() {
         self.connectionNumber++; // rejects incoming calls
 
         var deferred; //reject all pending calls
@@ -127,8 +127,8 @@
         }
       };
 
-      function reconnect(callEvents) {
-        setTimeout(function () {
+      async function reconnect(callEvents) {
+        setTimeout(async function () {
           try {
             self.socket = createSocket();
             self.id = 1;
@@ -140,7 +140,7 @@
         }, reconnectTimeout);
       }
 
-      ws.onclose = function (err) {
+      ws.onclose = async function (err) {
         log('ONCLOSE CALLED', 'STATE', self.public.state());
         trace(err);
 
@@ -158,7 +158,7 @@
         reconnect(callEvents);
       };
 
-      ws.onerror = function (err) {
+      ws.onerror = async function (err) {
         log('ONERROR CALLED', 'STATE', self.public.state());
         trace(err);
         rejectQueue();
@@ -167,7 +167,7 @@
         log('WebSocket has been closed by error: ', err);
       };
 
-      function tryCallEvent(func, event) {
+      async function tryCallEvent(func, event) {
         try {
           return func(event);
         } catch (e) {
@@ -181,7 +181,7 @@
         }
       }
 
-      function callEvents(evName, event) {
+      async function callEvents(evName, event) {
         while (0 < self.oneTimeEventStore[evName].length) {
           var deferred = self.oneTimeEventStore[evName].shift();
           if (deferred.hasOwnProperty('resolve') && deferred.promise.isPending()) deferred.resolve();
@@ -194,7 +194,7 @@
         }
       }
 
-      ws.onopen = function (ev) {
+      ws.onopen = async function (ev) {
         log('ONOPEN CALLED', 'STATE', self.public.state());
         trace(ev);
 
@@ -207,17 +207,17 @@
         callEvents('onchange', ev);
       };
 
-      function handleCall(self, data) {
+      async function handleCall(self, data) {
         if (!self.routes.hasOwnProperty(data.method)) throw new Error('Route not found');
         var connectionNumber = self.connectionNumber;
         var deferred = new Deferred();
-        deferred.promise.then(function (result) {
+        deferred.promise.then(async function (result) {
           if (connectionNumber !== self.connectionNumber) return;
           self.socket.send(JSON.stringify({
             id: data.id,
             result: result
           }));
-        }, function (error) {
+        }, async function (error) {
           if (connectionNumber !== self.connectionNumber) return;
           self.socket.send(JSON.stringify({
             id: data.id,
@@ -227,7 +227,7 @@
         var func = self.routes[data.method];
         if (self.asyncRoutes[data.method]) return func.apply(deferred, [data.params]);
 
-        function badPromise() {
+        async function badPromise() {
           throw new Error("You should register route with async flag.");
         }
 
@@ -244,7 +244,7 @@
         }
       }
 
-      function handleError(self, data) {
+      async function handleError(self, data) {
         if (!self.store.hasOwnProperty(data.id)) return log('Unknown callback');
         var deferred = self.store[data.id];
         if (typeof deferred === 'undefined') return log('Confirmation without handler');
@@ -253,7 +253,7 @@
         deferred.reject(data.error);
       }
 
-      function handleResult(self, data) {
+      async function handleResult(self, data) {
         var deferred = self.store[data.id];
         if (typeof deferred === 'undefined') return log('Confirmation without handler');
         delete self.store[data.id];
@@ -265,7 +265,7 @@
         return deferred.reject(data.error);
       }
 
-      ws.onmessage = function (message) {
+      ws.onmessage = async function (message) {
         log('ONMESSAGE CALLED', 'STATE', self.public.state());
         trace(message);
         if (message.type !== 'message') return;
@@ -296,7 +296,7 @@
       return ws;
     }
 
-    function makeCall(func, args, params) {
+    async function makeCall(func, args, params) {
       self.id += 2;
       var deferred = new Deferred();
       var callObj = Object.freeze({
@@ -331,23 +331,23 @@
     self.routes = {};
     self.store = {};
     self.public = Object.freeze({
-      call: function call(func, args, params) {
+      call: async function call(func, args, params) {
         return makeCall(func, args, params);
       },
-      addRoute: function addRoute(route, callback, isAsync) {
+      addRoute: async function addRoute(route, callback, isAsync) {
         self.asyncRoutes[route] = isAsync || false;
         self.routes[route] = callback;
       },
-      deleteRoute: function deleteRoute(route) {
+      deleteRoute: async function deleteRoute(route) {
         delete self.asyncRoutes[route];
         return delete self.routes[route];
       },
-      addEventListener: function addEventListener(event, func) {
+      addEventListener: async function addEventListener(event, func) {
         var eventId = self.eventId++;
         self.eventStore[event][eventId] = func;
         return eventId;
       },
-      removeEventListener: function removeEventListener(event, index) {
+      removeEventListener: async function removeEventListener(event, index) {
         if (self.eventStore[event].hasOwnProperty(index)) {
           delete self.eventStore[event][index];
           return true;
@@ -355,30 +355,30 @@
           return false;
         }
       },
-      onEvent: function onEvent(event) {
+      onEvent: async function onEvent(event) {
         var deferred = new Deferred();
         self.oneTimeEventStore[event].push(deferred);
         return deferred.promise;
       },
-      destroy: function destroy() {
+      destroy: async function destroy() {
         return self.socket.close();
       },
-      state: function state() {
+      state: async function state() {
         return readyState[this.stateCode()];
       },
-      stateCode: function stateCode() {
+      stateCode: async function stateCode() {
         if (self.socketStarted && self.socket) return self.socket.readyState;
         return 3;
       },
-      connect: function connect() {
+      connect: async function connect() {
         self.socketStarted = true;
         self.socket = createSocket();
       }
     });
-    self.public.addRoute('log', function (argsObj) {
+    self.public.addRoute('log', async function (argsObj) {
       //console.info("Websocket sent: ".concat(argsObj));
     });
-    self.public.addRoute('ping', function (data) {
+    self.public.addRoute('ping', async function (data) {
       return data;
     });
     return self.public;
