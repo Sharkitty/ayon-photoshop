@@ -65,19 +65,24 @@
     }
              
     async function main(websocket_url){
-      // creates connection to 'websocket_url', registers routes    
-      log.warn("websocket_url", websocket_url);   
-      var default_url = 'ws://localhost:8099/ws/';
-      
-      if  (websocket_url == ''){
-           websocket_url = default_url;
-      }
-      log.warn("connecting to:", websocket_url);  
-      RPC = new WSRPC(websocket_url, 5000); // spin connection
+      urlPromise = new Promise(function(resolve) {
+          log.warn("websocket_url", websocket_url);
+          if (websocket_url == '') {
+              // set default URL
+              result = 'ws://localhost:8099/ws/';
+          }
+          resolve(result);
+      });
+
+      // TODO await urlPromise
+      RPC = new Promise(function(resolve) {
+          log.warn("connection to:", websocket_url);
+          result = new WSRPC(websocket_url, 5000);
+          resolve(result);
+      });
   
-      RPC.connect();
-  
-      log.warn("connected"); 
+      // TODO await RPC
+      RPC.connect().then(log.warn("connected"));
       
       async function EscapeStringForJSX(str){
       // Replaces:
