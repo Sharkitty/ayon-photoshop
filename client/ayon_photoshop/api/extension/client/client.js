@@ -74,15 +74,13 @@
           resolve(result);
       });
 
-      // TODO await urlPromise
-      RPC = new Promise(function(resolve) {
-          log.warn("connection to:", websocket_url);
-          result = new WSRPC(websocket_url, 5000);
+      await urlPromise.then(RPC = new Promise(function(resolve) {
+          log.warn("connection to:", urlPromise);
+          result = new WSRPC(urlPromise, 5000);
           resolve(result);
-      });
+      }));
   
-      // TODO await RPC
-      RPC.connect().then(log.warn("connected"));
+      await RPC.then(RPC.connect().then(log.warn("connected")));
       
       async function EscapeStringForJSX(str){
       // Replaces:

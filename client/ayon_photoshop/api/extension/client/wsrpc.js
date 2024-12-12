@@ -13,29 +13,34 @@
   var Deferred = async function Deferred() {
     _classCallCheck(this, Deferred);
 
-    var self = this;
-    self.resolve = null;
-    self.reject = null;
-    self.done = false;
-
-    async function wrapper(func) {
-      return async function () {
-        if (self.done) throw new Error('Promise already done');
-        self.done = true;
-        return func.apply(this, arguments);
-      };
-    }
-
-    self.promise = new Promise(function (resolve, reject) {
-      self.resolve = wrapper(resolve);
-      self.reject = wrapper(reject);
+    var self = new Promise(function (resolve) {
+        this;
+        this.resolve = null;
+        this.reject = null;
+        this.done = false;
+        resolve(this);
     });
 
-    self.promise.isPending = async function () {
-      return !self.done;
-    };
+    await self.then(
+        async function wrapper(func) {
+          return new Promise(function () {
+            if (self.done) throw new Error('Promise already done');
+            self.done = true;
+            return func.apply(this, arguments);
+          });
+        }
 
-    return self;
+        self.promise = new Promise(function (resolve, reject) {
+          self.resolve = wrapper(resolve);
+          self.reject = wrapper(reject);
+        });
+
+        self.promise.isPending = async function () {
+          return !self.done;
+        };
+
+        await self.promise.then(return self);
+    );
   };
 
   async function logGroup(group, level, args) {
