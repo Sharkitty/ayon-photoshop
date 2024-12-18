@@ -484,7 +484,7 @@ CSInterface.prototype.hostEnvironment = window.__adobe_cep__ ? JSON.parse(window
  *
  *   @return A \c #HostEnvironment object.
  */
-CSInterface.prototype.getHostEnvironment = async function()
+CSInterface.prototype.getHostEnvironment = function()
 {
     this.hostEnvironment = JSON.parse(window.__adobe_cep__.getHostEnvironment());
     return this.hostEnvironment;
@@ -503,7 +503,7 @@ CSInterface.prototype.closeExtension = async function()
  *
  * @return The platform-specific system path string.
  */
-CSInterface.prototype.getSystemPath = async function(pathType)
+CSInterface.prototype.getSystemPath = function(pathType)
 {
     var path = decodeURI(window.__adobe_cep__.getSystemPath(pathType));
     var OSVersion = this.getOSInformation();
@@ -531,8 +531,9 @@ CSInterface.prototype.evalScript = async function(script, callback)
     if(callback === null || callback === undefined)
     {
         callback = async function(result){};
-    }
-    window.__adobe_cep__.evalScript(script, callback);
+    }.then(
+        window.__adobe_cep__.evalScript(script, callback)
+    );
 };
 
 /**
@@ -543,8 +544,7 @@ CSInterface.prototype.evalScript = async function(script, callback)
  */
 CSInterface.prototype.getApplicationID = async function()
 {
-    var appId = this.hostEnvironment.appId;
-    return appId;
+    return this.hostEnvironment.appId;
 };
 
 /**
@@ -555,8 +555,7 @@ CSInterface.prototype.getApplicationID = async function()
  */
 CSInterface.prototype.getHostCapabilities = async function()
 {
-    var hostCapabilities = JSON.parse(window.__adobe_cep__.getHostCapabilities() );
-    return hostCapabilities;
+    return JSON.parse(window.__adobe_cep__.getHostCapabilities() );
 };
 
 /**
@@ -570,9 +569,9 @@ CSInterface.prototype.dispatchEvent = async function(event)
     if (typeof event.data == "object")
     {
         event.data = JSON.stringify(event.data);
-    }
-
-    window.__adobe_cep__.dispatchEvent(event);
+    }.then(
+        window.__adobe_cep__.dispatchEvent(event)
+    );
 };
 
 /**
@@ -632,11 +631,7 @@ CSInterface.prototype.requestOpenExtension = async function(extensionId, params)
  */
 CSInterface.prototype.getExtensions = async function(extensionIds)
 {
-    var extensionIdsStr = JSON.stringify(extensionIds);
-    var extensionsStr = window.__adobe_cep__.getExtensions(extensionIdsStr);
-
-    var extensions = JSON.parse(extensionsStr);
-    return extensions;
+    return JSON.parse(window.__adobe_cep__.getExtensions(JSON.stringify(extensionIds)));
 };
 
 /**
@@ -646,10 +641,7 @@ CSInterface.prototype.getExtensions = async function(extensionIds)
  */
 CSInterface.prototype.getNetworkPreferences = async function()
 {
-    var result = window.__adobe_cep__.getNetworkPreferences();
-    var networkPre = JSON.parse(result);
-
-    return networkPre;
+    return JSON.parse(window.__adobe_cep__.getNetworkPreferences());
 };
 
 /**
