@@ -503,19 +503,23 @@ CSInterface.prototype.closeExtension = async function()
  *
  * @return The platform-specific system path string.
  */
-CSInterface.prototype.getSystemPath = function(pathType)
+CSInterface.prototype.getSystemPath = async function(pathType)
 {
-    var path = decodeURI(window.__adobe_cep__.getSystemPath(pathType));
-    var OSVersion = this.getOSInformation();
-    if (OSVersion.indexOf("Windows") >= 0)
     {
-      path = path.replace("file:///", "");
-    }
-    else if (OSVersion.indexOf("Mac") >= 0)
-    {
-      path = path.replace("file://", "");
-    }
-    return path;
+        var path = decodeURI(window.__adobe_cep__.getSystemPath(pathType));
+        var OSVersion = this.getOSInformation();
+    }.then(
+        if (OSVersion.indexOf("Windows") >= 0)
+        {
+          path = path.replace("file:///", "");
+        }
+        else if (OSVersion.indexOf("Mac") >= 0)
+        {
+          path = path.replace("file://", "");
+        }.then(
+            return path;
+        );
+    );
 };
 
 /**
@@ -662,35 +666,43 @@ CSInterface.prototype.getNetworkPreferences = async function()
  */
 CSInterface.prototype.initResourceBundle = async function()
 {
-    var resourceBundle = JSON.parse(window.__adobe_cep__.initResourceBundle());
-    var resElms = document.querySelectorAll('[data-locale]');
-    for (var n = 0; n < resElms.length; n++)
     {
-       var resEl = resElms[n];
-       // Get the resource key from the element.
-       var resKey = resEl.getAttribute('data-locale');
-       if (resKey)
-       {
-           // Get all the resources that start with the key.
-           for (var key in resourceBundle)
-           {
-               if (key.indexOf(resKey) === 0)
-               {
-                   var resValue = resourceBundle[key];
-                   if (key.length == resKey.length)
-                   {
-                        resEl.innerHTML = resValue;
-                   }
-                   else if ('.' == key.charAt(resKey.length))
-                   {
-                        var attrKey = key.substring(resKey.length + 1);
-                        resEl[attrKey] = resValue;
-                   }
-               }
-           }
-       }
-    }
-    return resourceBundle;
+        var resourceBundle = JSON.parse(window.__adobe_cep__.initResourceBundle());
+        var resElms = document.querySelectorAll('[data-locale]');
+    }.then(
+        for (var n = 0; n < resElms.length; n++)
+        {
+            {
+                var resEl = resElms[n];
+                // Get the resource key from the element.
+                var resKey = resEl.getAttribute('data-locale');
+            }.then(
+                if (resKey)
+                {
+                    // Get all the resources that start with the key.
+                    for (var key in resourceBundle)
+                    {
+                        if (key.indexOf(resKey) === 0)
+                        {
+                            var resValue = resourceBundle[key];
+                            await resValue.then(
+                                if (key.length == resKey.length)
+                                {
+                                     resEl.innerHTML = resValue;
+                                }
+                                else if ('.' == key.charAt(resKey.length))
+                                {
+                                     resEl[key.substring(resKey.length + 1)] = resValue;
+                                }
+                            );
+                        }
+                    }
+                }
+            );
+        }.then(
+            return resourceBundle;
+        );
+    );
 };
 
 /**
