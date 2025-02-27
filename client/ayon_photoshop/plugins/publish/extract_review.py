@@ -194,7 +194,7 @@ class ExtractReview(publish.Extractor):
             "frameStart": 1,
             "frameEnd": no_of_frames,
             "fps": fps,
-            "tags": self.mov_options['tags']
+            "tags": self.mov_options['tags'].append("kitsureview")
         })
 
     def _generate_thumbnail(
