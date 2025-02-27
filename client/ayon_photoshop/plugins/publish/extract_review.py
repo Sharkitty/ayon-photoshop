@@ -54,7 +54,7 @@ class ExtractReview(publish.Extractor):
             "name": repre_name,
             "ext": "jpg",
             "stagingDir": staging_dir,
-            "tags": self.jpg_options['tags'],
+            "tags": self.jpg_options['tags'].append("kitsureview"),
         }
 
         if instance.data["productType"] != "review":
