@@ -54,7 +54,7 @@ class ExtractReview(publish.Extractor):
             "name": repre_name,
             "ext": "jpg",
             "stagingDir": staging_dir,
-            "tags": self.jpg_options['tags'].append("kitsureview"),
+            "tags": self.jpg_options['tags'] + ["kitsureview"],
         }
 
         if instance.data["productType"] != "review":
@@ -194,7 +194,7 @@ class ExtractReview(publish.Extractor):
             "frameStart": 1,
             "frameEnd": no_of_frames,
             "fps": fps,
-            "tags": self.mov_options['tags'].append("kitsureview")
+            "tags": self.mov_options['tags'] + ["kitsureview"]
         })
 
     def _generate_thumbnail(
